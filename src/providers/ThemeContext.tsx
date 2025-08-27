@@ -1,14 +1,16 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
 
 type Theme = 'light'|'dark';
 type ThemeCtx = { theme: Theme; toggle: () => void };
-
 const Ctx = createContext<ThemeCtx | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const [theme, setTheme] = useState<Theme>('light');
-    const toggle = () => setTheme(t => (t === 'light' ? 'dark' : 'light'));
-    return <Ctx.Provider value={{ theme, toggle }}>{children}</Ctx.Provider>;
+    const value = useMemo(
+        () => ({ theme, toggle: () => setTheme(t => (t === 'light' ? 'dark' : 'light')) }),
+        [theme],
+    );
+    return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useTheme() {
