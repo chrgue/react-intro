@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 type Props = {
     id: number;
     text: string;
@@ -5,8 +7,8 @@ type Props = {
     onToggle: (id: number) => void;
 };
 
-export function TodoItem({ id, text, done, onToggle }: Props) {
-    console.log('render <TodoItem>', id); // noisy on purpose
+function TodoItemBase({ id, text, done, onToggle }: Props) {
+    console.log('render <TodoItem>', id);
     return (
         <li>
             <label>
@@ -16,3 +18,6 @@ export function TodoItem({ id, text, done, onToggle }: Props) {
         </li>
     );
 }
+
+// Only re-render if props actually change:
+export const TodoItemMemo = memo(TodoItemBase);

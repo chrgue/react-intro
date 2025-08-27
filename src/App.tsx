@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { TodoItem } from './components';
+import { useCallback, useMemo, useState } from 'react';
+import { TodoItem } from './components/TodoItem';
 
 type Todo = { id: number; text: string; done: boolean };
 
@@ -11,33 +11,38 @@ export default function App() {
     ]);
     const [filter, setFilter] = useState('');
 
-    // PROBLEM: inline callback is re-created on every render,
-    // so children see a new prop and re-render.
-    const onToggle = (id: number) => {
+    // FIX: stable callback — identity stays the same across re-renders
+    const onToggle = useCallback((id: number) => {
         setTodos((xs) => xs.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-    };
+    }, []);
 
-    // PROBLEM: derive list during render (fine functionally, but we’ll
-    // later show how to memoize when it’s heavy).
-    const visible = todos.filter((t) =>
-        t.text.toLowerCase().includes(filter.toLowerCase()),
+    // FIX: memoize a derived array — only recompute when inputs change
+    const visible = useMemo(
+        () => todos.filter((t) => t.text.toLowerCase().includes(filter.toLowerCase())),
+        [todos, filter],
     );
 
     return (
         <div style={{ fontFamily: 'system-ui, sans-serif', margin: 24 }}>
-            <h1>5a) Unnecessary re-renders</h1>
-            <p>Open the console and type below. Notice every item re-renders on each keystroke.</p>
+            <h1>5b) Fix: memo + stable callbacks + memoized derived data</h1>
+            <p>Type in the filter. Only the list (and matching items) should re-render now.</p>
 
             <label>
                 Filter: <input value={filter} onChange={(e) => setFilter(e.target.value)} />
             </label>
 
             <ul>
-                {visible.map((t, idx) => (
-                    // PROBLEM: using index as key can lead to issues on reordering
-                    <TodoItem key={idx} {...t} onToggle={onToggle} />
+                {visible.map((t) => (
+                    // FIX: stable, semantic keys (ids), not indices
+                    <TodoItem key={t.id} {...t} onToggle={onToggle} />
                 ))}
             </ul>
+
+            <small>
+                Rules of thumb: use <code>React.memo</code> for expensive/pure children, stabilize handler
+                identities with <code>useCallback</code>, and memoize heavy derived data with{' '}
+                <code>useMemo</code>. Measure first with React DevTools Profiler.
+            </small>
         </div>
     );
 }
